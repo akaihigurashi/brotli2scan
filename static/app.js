@@ -87,6 +87,9 @@
   }
 
   function render(r) {
+    // "Run it yourself": the command now uses the address that was just checked
+    const cli = document.getElementById("cli-target");
+    if (cli && r.host) cli.textContent = r.host;
     result.replaceChildren();
     result.setAttribute("aria-labelledby", "result-h");
     result.append(el("p", { class: "kicker", text: "Fresh out of the oven" }), verdictLine(r));
@@ -198,4 +201,23 @@
       button.textContent = "Check website";
     }
   });
+
+  // "Details" from Check all on shouldipanic.ch: show the result that was just checked.
+  // It comes from the server's cache, nothing is sent to the website again.
+  if (preset && new URLSearchParams(location.search).get("show") === "1") {
+    fetch("/api/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ host: preset, cached_only: true }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return;                 // nothing recent: the address is filled in, check as usual
+        result.hidden = false;
+        render(data);
+        result.focus({ preventScroll: true });
+        result.scrollIntoView({ block: "start" });
+      })
+      .catch(() => {});
+  }
 })();
