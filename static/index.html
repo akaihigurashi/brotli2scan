@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>brotli2scan</title>
+<meta name="description" content="Check whether your website runs on software affected by HTTP2Shell (CVE-2026-111497), the critical bug in the Brotli decompressor: Node.js, Bun, .NET, Envoy, Python.">
+<meta name="robots" content="index, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<main>
+  <nav class="topbar" aria-label="Site">
+    <a class="back" href="https://shouldipanic.ch">← shouldipanic.ch</a>
+    <a class="gh" href="https://github.com/akaihigurashi/brotli2scan" rel="noopener">
+      <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      <span>Source on GitHub</span>
+    </a>
+  </nav>
+
+  <header class="intro">
+    <div class="brand">
+      <svg class="roll" role="img" aria-label="A bread roll" viewBox="0 0 120 80" width="96" height="64">
+        <ellipse cx="60" cy="50" rx="56" ry="27" class="roll-base"/>
+        <ellipse cx="60" cy="44" rx="54" ry="30" class="roll-crust"/>
+        <ellipse cx="52" cy="34" rx="34" ry="14" class="roll-shine"/>
+        <path d="M34 30 Q42 44 38 58" class="roll-cut"/>
+        <path d="M58 24 Q66 42 62 62" class="roll-cut"/>
+        <path d="M82 28 Q90 44 86 58" class="roll-cut"/>
+      </svg>
+      <a class="wordmark" href="/" aria-label="brotli2scan home"><span>brotli</span><span class="wm-2">2</span><span class="wm-scan">scan</span></a>
+    </div>
+    <h1>Is your website affected by HTTP2Shell?</h1>
+    <p class="lede">HTTP2Shell
+      (<a href="https://nvd.nist.gov/vuln/detail/CVE-2026-111497" rel="noopener">CVE-2026-111497</a>)
+      is a critical bug in the Brotli decompression library. Attackers can crash servers or run code
+      on them by sending crafted Brotli data. It affects Node.js, Python, .NET, Envoy and more.
+      Enter your website to see which of them it runs on.</p>
+  </header>
+
+  <form id="check" novalidate>
+    <label for="host" class="field-label">Website address</label>
+    <div class="field-row">
+      <input id="host" name="host" type="text" inputmode="url" autocomplete="url"
+             autocapitalize="off" spellcheck="false" placeholder="www.example.ch" required>
+      <button type="submit" id="go">Check website</button>
+    </div>
+    <label class="consent">
+      <input type="checkbox" id="consent" required>
+      <span>I own this website or have the owner's permission to have it checked.</span>
+    </label>
+    <label class="consent probe">
+      <input type="checkbox" id="probe">
+      <span>Also send a Brotli test request.
+        <span class="hint">Two tiny POST requests to your start page: one with valid Brotli data,
+        one with an unknown encoding. Shows whether your server unpacks Brotli it receives.
+        Harmless, never the data that triggers the bug.</span></span>
+    </label>
+    <p class="fineprint">The check loads your start page the same way a browser does.
+      Abuse may be reported to the authorities.</p>
+  </form>
+
+  <section id="result" aria-live="polite" tabindex="-1" hidden></section>
+
+  <aside class="why" aria-labelledby="why-h">
+    <svg class="roll small" role="img" aria-label="A Swiss bread roll" viewBox="0 0 120 80" width="84" height="56">
+      <ellipse cx="60" cy="50" rx="56" ry="27" class="roll-base"/>
+      <ellipse cx="60" cy="44" rx="54" ry="30" class="roll-crust"/>
+      <ellipse cx="52" cy="34" rx="34" ry="14" class="roll-shine"/>
+      <path d="M34 30 Q42 44 38 58" class="roll-cut"/>
+      <path d="M58 24 Q66 42 62 62" class="roll-cut"/>
+      <path d="M82 28 Q90 44 86 58" class="roll-cut"/>
+    </svg>
+    <div>
+      <h2 id="why-h">Why the bread?</h2>
+      <p><em>Brötli</em> is Swiss German for a small bread roll. Google's engineers in Zurich named
+        the Brotli compression format after it. Now there's a bug in it, so our scanner got a bread
+        roll too.</p>
+    </div>
+  </aside>
+
+  <footer>
+    <h2>How it works</h2>
+    <p>We load the start page of your website and look for the software it runs on: Node.js,
+      Bun, .NET, Envoy or Python, and frameworks that only run on them. With the test request
+      ticked, we also check whether your server unpacks Brotli data sent to it.</p>
+    <h2>Rules of use</h2>
+    <p>Only check websites you own or have permission to check. Abuse may be reported to
+      the authorities.</p>
+    <h2>Privacy</h2>
+    <p>For every check we store the time, your IP address, your browser's name and the checked
+      address, to prevent and investigate abuse. These records are deleted after 30 days,
+      unless they are needed to report or investigate a specific case of misuse.
+      No cookies, no tracking, no third-party content.</p>
+<!--OPERATOR-->
+    <p class="family">brotli2scan is part of <a href="https://shouldipanic.ch">shouldipanic.ch</a>,
+      open-source checks for current web vulnerabilities.</p>
+  </footer>
+</main>
+</body>
+</html>

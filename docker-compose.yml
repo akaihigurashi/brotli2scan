@@ -1,0 +1,55 @@
+services:
+  brotli2scan:
+    image: ghcr.io/akaihigurashi/brotli2scan:latest
+    # build: .          # uncomment to build from a clone instead of pulling
+    container_name: brotli2scan
+    restart: unless-stopped
+
+    environment:
+      # Your public address - the API only accepts requests from this origin.
+      PANIC_ORIGIN: "https://brotli2scan.example.ch"
+      # Optional: a contact section at the bottom of the page
+      # PANIC_OPERATOR: "Your Name"
+      # PANIC_CONTACT: "abuse@example.ch"
+      # PANIC_IMPRINT_URL: "https://www.example.ch/imprint"
+      # nginx on the host reaches the container via this network's gateway:
+      PANIC_TRUSTED_PROXY: "172.30.89.1"
+      # Never check these domains / IPs (comma-separated), e.g. your own servers:
+      # PANIC_DENY_HOSTS: "example.ch,intranet.example.ch"
+      # PANIC_DENY_IPS: "203.0.113.10"   (your own server is excluded automatically)
+
+    # only reachable from the host itself - nginx does TLS and forwards to it
+    ports:
+      - "127.0.0.1:8089:8089"
+
+    volumes:
+      - brotli2scan-data:/data
+
+    networks:
+      - brotli2scan
+
+    # hardening
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  brotli2scan:
+    ipam:
+      config:
+        - subnet: 172.30.89.0/24
+          gateway: 172.30.89.1
+
+volumes:
+  brotli2scan-data:
