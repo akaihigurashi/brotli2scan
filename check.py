@@ -56,7 +56,7 @@ Status:
 from engine import *  # noqa: F401,F403  # bundle: strip
 
 NAME = "brotli2scan"
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 DESCRIPTION = "Find web servers affected by HTTP2Shell (CVE-2026-111497, Brotli decoder bug)."
 # database: these platforms and every technology that runs on them
 TARGETS = {"Node.js", "Microsoft ASP.NET", "Envoy", "Python"}
