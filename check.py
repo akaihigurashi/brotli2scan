@@ -40,13 +40,13 @@ Targets can be IPs, CIDR ranges, hostnames, URLs, or a file with one per line.
 The Brotli test works best against an endpoint that reads JSON bodies (an API
 route): give its URL as target. A start page that ignores POST bodies can't tell.
 
-Verdict column:
-    VULNERABLE     the platform version is visible and older than the fix
-    PATCHED        the platform version is visible and includes the fix
-    DECODES BR     (-b) the server unpacks Brotli request bodies: update urgently
-                   unless you know the platform is patched
-    POSSIBLE       a platform that includes the Brotli decoder (version hidden)
-    NO SIGN        nothing affected visible
+Status:
+    VULNERABLE           the platform version is visible and older than the fix
+    LIKELY VULNERABLE    (-b) the server unpacks Brotli request bodies: update
+                         unless you know the platform is patched
+    POSSIBLY VULNERABLE  a platform that includes the Brotli decoder, version hidden
+    PATCHED              the platform version is visible and includes the fix
+    NOT DETECTED         nothing affected visible
     SNI ONLY       HTTPS server that only answers for its hostnames; see vhost results
     NOT HTTP       open port, but not a web server (shown with -a)
     ERROR          host not reachable / no open port (shown with -a)
@@ -56,7 +56,7 @@ Verdict column:
 from engine import *  # noqa: F401,F403  # bundle: strip
 
 NAME = "brotli2scan"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 DESCRIPTION = "Find web servers affected by HTTP2Shell (CVE-2026-111497, Brotli decoder bug)."
 # database: these platforms and every technology that runs on them
 TARGETS = {"Node.js", "Microsoft ASP.NET", "Envoy", "Python"}
@@ -243,11 +243,11 @@ def verdict(info):
     elif states and all(s == "patched" for _, _, s in states):
         v = "PATCHED"
     elif (info.get("probe") or {}).get("result") == "decodes":
-        v = "DECODES BR"
+        v = "LIKELY VULNERABLE"
     elif plats:
-        v = "POSSIBLE"
+        v = "POSSIBLY VULNERABLE"
     else:
-        v = "NO SIGN"
+        v = "NOT DETECTED"
     techs = [p for p, _, _ in plats] + [t for t in info["techs"] if t not in PLATFORMS]
     techs = [f"{t} {info['versions'][t]}" if t in info["versions"] and t not in PLATFORMS else t
              for t in dict.fromkeys(techs)]
@@ -258,11 +258,53 @@ def count_key(v):
     return v
 
 
+def verdict_style(row):
+    """(rank, colour, status, reason) for the result list."""
+    v, version, techs, evidence = row[3], row[4], row[5], row[7]
+    plats = [t for t in techs.split(", ") if t in PLATFORMS]
+    probe = re.search(r"probe:(\w+)", evidence)
+    probe = probe.group(1) if probe else ""
+    if v == "VULNERABLE":
+        bad = []
+        for item in version.split(", "):
+            p, _, ver = item.rpartition(" ")
+            if platform_status(p, ver) == "vulnerable":
+                fixed = FIXED.get(p, {}).get(".".join(ver.split(".")[:1 if p in ("Node.js", "Bun") else 2]))
+                bad.append(f"{p} {ver} < {fixed}" if fixed else f"{p} {ver} (end of life)")
+        return 10, "red", v, ", ".join(bad) or version
+    if v == "LIKELY VULNERABLE":
+        return 12, "red", v, "unpacks Brotli request bodies" + (f" ({', '.join(plats)})" if plats else "")
+    if v == "POSSIBLY VULNERABLE":
+        if plats == ["Python"]:
+            return 22, "yellow", v, "Python: only with the Brotli package"
+        return 20, "yellow", v, f"{', '.join(plats)}, version hidden"
+    if v == "PATCHED":
+        return 40, "green", v, version
+    if v == "NOT DETECTED":
+        return 50, "plain", v, "refuses Brotli request bodies" if probe == "rejects" else ""
+    return None
+
+
+EXAMPLES = """examples:
+  brotli2scan.py 203.0.113.10                        20 web ports + every vhost on the IP
+  brotli2scan.py 203.0.113.10 -b                     + Brotli test request on every website
+  brotli2scan.py https://api.example.ch/v1/orders -b test one API route (best for -b)
+  brotli2scan.py 198.51.100.0/24 --names domains.txt a whole range + your own hostnames
+  brotli2scan.py 203.0.113.10 -p all -o out.csv      all 65535 ports, results also as CSV
+
+status: VULNERABLE (version visible, without the fix) - LIKELY VULNERABLE (-b: server
+unpacks Brotli it receives) - POSSIBLY VULNERABLE (affected platform, version hidden) -
+PATCHED - NOT DETECTED
+"""
+
+
 def add_arguments(ap):
-    ap.add_argument("-b", "--send-brotli", action="store_true",
-                    help="also send a small VALID Brotli request body (and one with an unknown encoding) "
-                         "to every page, to see whether the server unpacks Brotli it receives. "
-                         "Harmless data only; give an API endpoint URL as target for the best result")
+    g = ap.add_argument_group("HTTP2Shell test")
+    g.add_argument("-b", "--send-brotli", action="store_true",
+                   help="also send two tiny POST requests to every website: one with VALID Brotli "
+                        "data, one with an unknown encoding. Shows whether the server unpacks Brotli "
+                        "it receives (that's what HTTP2Shell attacks). Harmless data only, never the "
+                        "bug trigger. Works best with an API URL as target")
 
 
 def options_from_args(a):
@@ -356,19 +398,19 @@ def web_result(host, ip, row, info, friendly_evidence):
         else names
     if verdict_ == "VULNERABLE":
         bad = [f"{p} {v}" for p, _, v in plats if platform_status(p, v) == "vulnerable"]
-        st = {"level": "bad", "title": "Likely affected",
+        st = {"level": "bad", "title": "Vulnerable",
               "text": f"This site runs {', '.join(bad)}, which doesn't include the HTTP2Shell fix. "
                       "Update it and restart the app."}
     elif verdict_ == "PATCHED":
         st = {"level": "good", "title": "Patched",
               "text": f"The visible version of {named} includes the HTTP2Shell fix."}
-    elif verdict_ == "DECODES BR":
-        st = {"level": "bad", "title": "Possibly affected",
+    elif verdict_ == "LIKELY VULNERABLE":
+        st = {"level": "bad", "title": "Likely vulnerable",
               "text": "Your server unpacks Brotli data it receives. Make sure "
                       + (f"{named} and " if plats else "")
                       + "its Brotli library run one of the fixed versions below."}
-    elif verdict_ == "POSSIBLE":
-        st = {"level": "warn", "title": "Possibly affected",
+    elif verdict_ == "POSSIBLY VULNERABLE":
+        st = {"level": "warn", "title": "Possibly vulnerable",
               "text": f"{named} {'is' if len(plats) == 1 else 'are'} affected by HTTP2Shell, but this "
                       "site doesn't reveal the exact version. Make sure it runs one of the fixed "
                       "versions below."}

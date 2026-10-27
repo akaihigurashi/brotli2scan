@@ -1,4 +1,9 @@
-# brotli2scan
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.png">
+    <img alt="brotli2scan" src="docs/logo-light.png" width="402">
+  </picture>
+</h1>
 
 Finds web servers affected by **HTTP2Shell** (CVE-2026-111497), the memory
 corruption bug in the Brotli decompressor. Part of [shouldipanic.ch](https://shouldipanic.ch).
@@ -38,13 +43,30 @@ python3 brotli2scan.py 203.0.113.10 -p all -o out.csv   # all 65535 ports, CSV o
 python3 brotli2scan.py -h                               # all options
 ```
 
-| Verdict | Meaning |
+| Status | Meaning |
 |---|---|
 | `VULNERABLE` | The platform version is visible and older than the fix |
+| `LIKELY VULNERABLE` | (`-b`) The server unpacks Brotli request bodies |
+| `POSSIBLY VULNERABLE` | A platform that includes the Brotli decoder, version hidden |
 | `PATCHED` | The platform version is visible and includes the fix |
-| `DECODES BR` | (`-b`) The server unpacks Brotli request bodies |
-| `POSSIBLE` | A platform that includes the Brotli decoder, version hidden |
-| `NO SIGN` | Nothing affected visible |
+| `NOT DETECTED` | Nothing affected visible |
+
+Results are listed worst first, with a short reason. Hidden results (closed ports,
+errors, vhosts that only show the default site) appear with `-a`, the evidence with `-v`.
+
+| Option | What it does |
+|---|---|
+| `-b` | Send the Brotli test request (see below) |
+| `-p LIST` | Ports: `web` (20 common ports, default), `all`, or `80,443,8000-8100` |
+| `-n` | No port scan, only 443 and 80 |
+| `--names FILE` | Your own hostname list, checked as vhosts |
+| `--no-vhosts` | Don't look for other websites on the same IP |
+| `-a` / `-v` | Show hidden results / show the evidence |
+| `-o FILE` | Also write all results to CSV |
+| `-d` | Debug: every request, header and match |
+| `-q` | No banner (for scripts) |
+| `-V` | Print the version |
+| `-h` | All options |
 
 ### The Brotli test request (`-b`)
 
@@ -57,6 +79,27 @@ sent, never the malformed data that triggers the bug.
 The test works best against an endpoint that reads JSON bodies. A start page that
 ignores POST bodies answers both requests the same way, which tells you nothing.
 Give an API route as target when you know one.
+
+### API keys for more passive DNS sources
+
+AlienVault OTX and HackerTarget work without keys. VirusTotal, Shodan and
+SecurityTrails need an API key, read from environment variables:
+
+| Variable | Source |
+|---|---|
+| `PANIC_VT_KEY` | VirusTotal passive DNS |
+| `PANIC_SHODAN_KEY` | Shodan hostnames |
+| `PANIC_SECURITYTRAILS_KEY` | SecurityTrails reverse IP |
+
+Keep them in a `.env` file only you can read, and load it just for the scan:
+
+```bash
+( set -a; . ./.env; set +a; python3 brotli2scan.py 203.0.113.10 )
+```
+
+`--vt-key`, `--shodan-key` and `--securitytrails-key` also work, but command-line
+arguments are visible to other local users (`ps`) and end up in your shell history.
+Key values are masked in error messages. (Thanks to Jonas Hüsser for this.)
 
 ## Web page with Docker
 

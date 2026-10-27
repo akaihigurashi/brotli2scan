@@ -64,22 +64,19 @@
 
   <section id="result" aria-live="polite" tabindex="-1" hidden></section>
 
-  <aside class="why" aria-labelledby="why-h">
-    <svg class="roll small" role="img" aria-label="A Swiss bread roll" viewBox="0 0 120 80" width="84" height="56">
-      <ellipse cx="60" cy="50" rx="56" ry="27" class="roll-base"/>
-      <ellipse cx="60" cy="44" rx="54" ry="30" class="roll-crust"/>
-      <ellipse cx="52" cy="34" rx="34" ry="14" class="roll-shine"/>
-      <path d="M34 30 Q42 44 38 58" class="roll-cut"/>
-      <path d="M58 24 Q66 42 62 62" class="roll-cut"/>
-      <path d="M82 28 Q90 44 86 58" class="roll-cut"/>
-    </svg>
+  <section class="yourself" aria-labelledby="self-h">
     <div>
-      <h2 id="why-h">Why the bread?</h2>
-      <p><em>Brötli</em> is Swiss German for a small bread roll. Google's engineers in Zurich named
-        the Brotli compression format after it. Now there's a bug in it, so our scanner got a bread
-        roll too.</p>
+      <h2 id="self-h">Need more? Run it yourself.</h2>
+      <p>This page checks one website at a time. The free command-line version does a lot more:
+        whole IP ranges, a port scan, every website hosted on the same server, CSV export, the Brotli test against your API routes,
+        and no limits. One Python file, nothing to install.</p>
     </div>
-  </aside>
+    <pre><span class="c"># download one file, run it</span>
+curl -LO https://github.com/akaihigurashi/brotli2scan/releases/latest/download/brotli2scan.py
+python3 brotli2scan.py 203.0.113.0/24 -b
+
+<span class="c"># only scan systems you're allowed to test</span></pre>
+  </section>
 
   <footer>
     <h2>How it works</h2>
@@ -98,6 +95,23 @@
     <p class="family">brotli2scan is part of <a href="https://shouldipanic.ch">shouldipanic.ch</a>,
       open-source checks for current web vulnerabilities.</p>
   </footer>
+
+  <aside class="why" aria-labelledby="why-h">
+    <svg class="roll small" role="img" aria-label="A Swiss bread roll" viewBox="0 0 120 80" width="84" height="56">
+      <ellipse cx="60" cy="50" rx="56" ry="27" class="roll-base"/>
+      <ellipse cx="60" cy="44" rx="54" ry="30" class="roll-crust"/>
+      <ellipse cx="52" cy="34" rx="34" ry="14" class="roll-shine"/>
+      <path d="M34 30 Q42 44 38 58" class="roll-cut"/>
+      <path d="M58 24 Q66 42 62 62" class="roll-cut"/>
+      <path d="M82 28 Q90 44 86 58" class="roll-cut"/>
+    </svg>
+    <div>
+      <h2 id="why-h">Why the bread?</h2>
+      <p><em>Brötli</em> is Swiss German for a small bread roll. Google's engineers in Zurich named
+        the Brotli compression format after it. Now there's a bug in it, so our scanner got a bread
+        roll too.</p>
+    </div>
+  </aside>
 </main>
 </body>
 </html>
